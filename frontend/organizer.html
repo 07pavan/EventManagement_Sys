@@ -175,7 +175,8 @@ label{display:block;font-size:12px;font-weight:600;color:#4a4455;letter-spacing:
         <label>Banner Image</label>
         <input type="file" id="f-image" accept="image/*" style="width:100%;padding:8px;border:1px solid #ccc3d8;border-radius:10px;font-size:14px"/>
         <p class="text-xs text-on-surface-variant mt-1">Optional. JPG/PNG recommended.</p>
-        <img id="f-image-preview" class="hidden mt-2 w-full h-32 object-cover rounded-xl border border-outline-variant"/>
+        <img id="f-image-preview" class="hidden mt-2 w-full h-32 object-cover rounded-xl border border-outline-variant"
+             onerror="this.classList.add('hidden'); currentImageUrl=null;"/>
       </div>
       <div class="flex items-center gap-sm">
         <input type="checkbox" id="f-published" class="w-4 h-4 accent-primary"/>
@@ -402,9 +403,19 @@ function openEditModal(id) {
   // Show existing image preview (the saved Cloudinary URL)
   const prev = document.getElementById('f-image-preview');
   if (ev.image) {
-    currentImageUrl = ev.image; // remember the current saved image
-    prev.src = ev.image;
-    prev.classList.remove('hidden');
+    currentImageUrl = ev.image;
+    // Test if the image URL actually loads before showing it
+    const testImg = new Image();
+    testImg.onload = () => {
+      prev.src = ev.image;
+      prev.classList.remove('hidden');
+    };
+    testImg.onerror = () => {
+      // URL is dead (e.g. old local file wiped from Render disk)
+      currentImageUrl = null;
+      prev.classList.add('hidden');
+    };
+    testImg.src = ev.image;
   } else {
     currentImageUrl = null;
     prev.classList.add('hidden');
