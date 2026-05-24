@@ -132,11 +132,15 @@ WSGI_APPLICATION = "core.wsgi.application"
 # connection string. Without this, you'd need to manually parse the string
 # into host/port/name/user/password — error-prone and fragile.
 #
-# conn_max_age=600: Keeps DB connections alive for 10 minutes (connection
-# pooling). Without this, Django opens a NEW connection per HTTP request —
-# costly at scale with Supabase's serverless connection limits.
+# IMPORTANT — Render free tier is IPv4 only. Supabase's direct connection
+# (db.xxx.supabase.co:5432) resolves to IPv6 and will FAIL on Render free.
+# Solution: use Supabase's Connection Pooler URL (IPv4) from the dashboard:
+#   Supabase → Project Settings → Database → Connection Pooling
 #
-# SSL: Supabase includes ?sslmode=require in its connection string already.
+#   Session Pooler    → port 5432  (recommended for Django — full SQL support)
+#   Transaction Pooler → port 6543 (pgBouncer — requires DISABLE_SERVER_SIDE_CURSORS)
+#
+# SSL: Supabase pooler URLs already include ?sslmode=require natively.
 # We set ssl_require=True only when the URL doesn't already specify sslmode,
 # to prevent conflicting SSL parameters and connection errors.
 import dj_database_url
@@ -144,16 +148,30 @@ import dj_database_url
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
-    # Supabase connection strings include ?sslmode=require natively.
+    # Detect if this is a Supabase Transaction Pooler URL (port 6543 / pgBouncer).
+    # Transaction Pooler (pgBouncer) does not support server-side cursors or
+    # persistent connections — both must be disabled for Django to work correctly.
+    _is_transaction_pooler = ":6543" in DATABASE_URL
+
+    # Supabase pooler URLs include ?sslmode=require natively.
     # Only force ssl_require if it's not already present in the URL.
     _ssl_required = "sslmode" not in DATABASE_URL
-    DATABASES = {
-        "default": dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=600,
-            ssl_require=_ssl_required,
-        )
-    }
+
+    db_config = dj_database_url.parse(
+        DATABASE_URL,
+        # Transaction Pooler (pgBouncer) owns the connection lifecycle —
+        # Django must NOT persist connections on its own side.
+        conn_max_age=0 if _is_transaction_pooler else 600,
+        ssl_require=_ssl_required,
+    )
+
+    # pgBouncer in transaction mode does not support PostgreSQL server-side
+    # cursors (used internally by Django for large querysets). Disabling this
+    # prevents "unexpected message from server" errors at runtime.
+    if _is_transaction_pooler:
+        db_config["DISABLE_SERVER_SIDE_CURSORS"] = True
+
+    DATABASES = {"default": db_config}
 else:
     # Local development fallback — SQLite requires zero configuration.
     # WHY SQLite: Developers can run the project with no Postgres installed.
