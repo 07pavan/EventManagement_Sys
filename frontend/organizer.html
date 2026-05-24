@@ -209,9 +209,10 @@ label{display:block;font-size:12px;font-weight:600;color:#4a4455;letter-spacing:
 <script>
 const PLACEHOLDER = 'https://lh3.googleusercontent.com/aida-public/AB6AXuBBG0kETVkyKmuooroSqWkqUKcaDZjoUS446cKpcRrRBQoMUtbw8EgGnXqVe8fTqIWuGOHGJQlyx6Y1yoMQ0kM3GNKRnsoU4gQqMVfEswZ7Cp2tyrV2eyiVdN0b3MkbP9p7T7STCiMh_PqsWcYYK0Q55EXcRAtKXe3Rn2-kjEI8unDAKB7ui5SCRNch9rIOJ-6ug1jlhYkMk3mZ9NsRQ3ZdzjOIncfg4JBH1NRg7OMERIGdPX3UljTD8DDXr8otuRPzv6F-6ImKBYo';
 
-let allEvents   = [];
-let editingId   = null;
-let deletingId  = null;
+let allEvents       = [];
+let editingId       = null;
+let deletingId      = null;
+let currentImageUrl = null; // tracks the existing Cloudinary URL when editing
 
 function toggleMenu() {
   document.getElementById('menu-overlay').classList.toggle('hidden');
@@ -360,8 +361,17 @@ function renderRow(ev) {
 }
 
 // ── Modal open/close ──────────────────────────────────────────────────────
+function resetImageInput() {
+  // Always clear the file input when opening any modal so a previously
+  // selected file from another event never silently gets reused.
+  const fileInput = document.getElementById('f-image');
+  fileInput.value = '';
+  currentImageUrl = null;
+}
+
 function openModal() {
   editingId = null;
+  resetImageInput();
   document.getElementById('modal-title').textContent   = 'Create New Event';
   document.getElementById('submit-btn').textContent    = 'Create Event';
   document.getElementById('event-form').reset();
@@ -374,33 +384,38 @@ function openEditModal(id) {
   const ev = allEvents.find(e => e.id === id);
   if (!ev) return;
   editingId = id;
+  resetImageInput(); // ← clear any stale file from a previous modal open
   document.getElementById('modal-title').textContent   = 'Edit Event';
   document.getElementById('submit-btn').textContent    = 'Save Changes';
   document.getElementById('form-error').classList.add('hidden');
 
-  // Fill form
-  document.getElementById('f-title').value     = ev.title;
-  document.getElementById('f-desc').value      = ev.description;
-  document.getElementById('f-category').value  = ev.category;
-  // Convert ISO to datetime-local format (slice off seconds+ms+Z)
-  document.getElementById('f-date').value      = ev.date ? ev.date.slice(0, 16) : '';
-  document.getElementById('f-venue').value     = ev.venue_name;
-  document.getElementById('f-price').value     = ev.price;
-  document.getElementById('f-tickets').value   = ev.total_tickets;
-  document.getElementById('f-published').checked = ev.is_published;
+  // Fill form fields
+  document.getElementById('f-title').value        = ev.title;
+  document.getElementById('f-desc').value         = ev.description;
+  document.getElementById('f-category').value     = ev.category;
+  document.getElementById('f-date').value         = ev.date ? ev.date.slice(0, 16) : '';
+  document.getElementById('f-venue').value        = ev.venue_name;
+  document.getElementById('f-price').value        = ev.price;
+  document.getElementById('f-tickets').value      = ev.total_tickets;
+  document.getElementById('f-published').checked  = ev.is_published;
 
+  // Show existing image preview (the saved Cloudinary URL)
+  const prev = document.getElementById('f-image-preview');
   if (ev.image) {
-    const prev = document.getElementById('f-image-preview');
+    currentImageUrl = ev.image; // remember the current saved image
     prev.src = ev.image;
     prev.classList.remove('hidden');
   } else {
-    document.getElementById('f-image-preview').classList.add('hidden');
+    currentImageUrl = null;
+    prev.classList.add('hidden');
   }
+
   document.getElementById('event-modal').classList.remove('hidden');
 }
 
 function closeModal() {
   document.getElementById('event-modal').classList.add('hidden');
+  resetImageInput();
   editingId = null;
 }
 
@@ -414,10 +429,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const file = this.files[0];
     const prev = document.getElementById('f-image-preview');
     if (file) {
+      // Show a local blob preview of the newly selected file
       prev.src = URL.createObjectURL(file);
       prev.classList.remove('hidden');
     } else {
-      prev.classList.add('hidden');
+      // No new file selected — fall back to the existing saved image (if any)
+      if (currentImageUrl) {
+        prev.src = currentImageUrl;
+        prev.classList.remove('hidden');
+      } else {
+        prev.classList.add('hidden');
+      }
     }
   });
 });
