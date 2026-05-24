@@ -4,12 +4,29 @@ events/models.py
 Event and Ticket models for the Local Event & Ticket Platform.
 """
 
+import os
 import uuid
 import hashlib
 
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+
+
+def get_event_image_path(instance, filename):
+    """
+    Generate a unique upload path for every event image.
+
+    WHY: Cloudinary uses the filename as the public_id. Without unique names,
+    uploading two files both named 'banner.jpg' will OVERWRITE each other in
+    Cloudinary, causing all events to show the same image.
+
+    FIX: Prefix every file with a UUID so names are guaranteed unique.
+    Result: events/images/a3f8c1d2e4b5.jpg
+    """
+    ext = os.path.splitext(filename)[1].lower()  # e.g. '.jpg'
+    unique_name = f"{uuid.uuid4().hex}{ext}"
+    return f"events/images/{unique_name}"
 
 
 class Event(models.Model):
@@ -63,7 +80,7 @@ class Event(models.Model):
     # Media
     # ------------------------------------------------------------------ #
     image = models.ImageField(
-        upload_to="events/images/",
+        upload_to=get_event_image_path,
         null=True,
         blank=True,
         help_text="Poster or banner image for the event.",
