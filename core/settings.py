@@ -232,9 +232,12 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 CLOUDINARY_URL = os.environ.get("CLOUDINARY_URL")
 
 if CLOUDINARY_URL:
-    # Cloudinary parses its credentials from the CLOUDINARY_URL env var
-    # automatically when the SDK is imported. We just need to set the
-    # DEFAULT_FILE_STORAGE to redirect Django's file operations to Cloudinary.
+    # Explicitly initialize the Cloudinary SDK from the URL so it works
+    # on all environments (Render, local, etc.)
+    import cloudinary
+    cloudinary.config(cloudinary_url=CLOUDINARY_URL)
+
+    # Redirect Django's file operations to Cloudinary
     DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
     CLOUDINARY_STORAGE = {
         "CLOUDINARY_URL": CLOUDINARY_URL,

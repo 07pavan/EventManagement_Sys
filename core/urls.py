@@ -20,9 +20,52 @@ def health_check(request):
     return JsonResponse({"status": "ok"})
 
 
+def cloudinary_health_check(request):
+    """
+    GET /health/cloudinary/
+    Diagnostic endpoint — open in browser to instantly verify Cloudinary
+    is configured and working on Render.
+    Returns cloud_name, api_key, storage backend, and a live ping result.
+    """
+    import os
+    from django.conf import settings
+
+    cloudinary_url = os.environ.get("CLOUDINARY_URL", "")
+    storage_backend = getattr(settings, "DEFAULT_FILE_STORAGE", "django.core.files.storage.FileSystemStorage")
+    is_cloudinary = "cloudinary" in storage_backend.lower()
+
+    result = {
+        "cloudinary_url_set": bool(cloudinary_url),
+        "storage_backend": storage_backend,
+        "using_cloudinary_storage": is_cloudinary,
+        "cloud_name": None,
+        "api_key": None,
+        "ping": None,
+        "error": None,
+    }
+
+    if cloudinary_url:
+        try:
+            import cloudinary
+            import cloudinary.api
+            config = cloudinary.config()
+            result["cloud_name"] = config.cloud_name
+            result["api_key"] = config.api_key
+            ping = cloudinary.api.ping()
+            result["ping"] = ping.get("status", "unknown")
+        except Exception as e:
+            result["error"] = str(e)
+    else:
+        result["error"] = "CLOUDINARY_URL environment variable is NOT set. Images cannot be saved permanently."
+
+    return JsonResponse(result)
+
+
 urlpatterns = [
     # Render health check — must be fast and unauthenticated
     path("health/", health_check, name="health-check"),
+    # Cloudinary diagnostic — visit in browser to verify image storage is working
+    path("health/cloudinary/", cloudinary_health_check, name="cloudinary-health"),
 
     # Django admin
     path("admin/", admin.site.urls),
