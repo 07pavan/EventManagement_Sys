@@ -60,9 +60,16 @@ services:
       - key: ALLOWED_HOSTS
         value: "eventmanagement-api1.onrender.com,localhost,127.0.0.1"
 
-      # ── Database (Neon.tech) ───────────────────────────────────────────
-      # Set manually: Neon Dashboard → Connection Details → Connection String
-      # Format: postgresql://user:pass@ep-xxx.us-east-2.aws.neon.tech/neondb?sslmode=require
+      # ── Database (Supabase) ────────────────────────────────────────────
+      # Set manually in Render Dashboard → Environment → Add Environment Variable
+      #
+      # HOW TO GET THIS VALUE:
+      #   1. Go to https://supabase.com → your project
+      #   2. Navigate to Project Settings → Database
+      #   3. Click "URI" tab under "Connection string"
+      #   4. Copy and paste the full URI here
+      #
+      # Format: postgresql://postgres:[YOUR-PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
       - key: DATABASE_URL
         sync: false
 

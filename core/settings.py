@@ -5,7 +5,7 @@ Production-ready settings for GoAttend.
 
 Environment tiers:
   - Local dev  : DEBUG=True, SQLite, console email, local media
-  - Production : DEBUG=False, Neon PostgreSQL, SMTP, Cloudinary media
+  - Production : DEBUG=False, Supabase PostgreSQL, SMTP, Cloudinary media
 
 All secrets are read exclusively from environment variables.
 No secret has a production-safe default — the app refuses to start
@@ -128,26 +128,30 @@ WSGI_APPLICATION = "core.wsgi.application"
 # ---------------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------------
-# WHY dj_database_url: Neon.tech and Render provide a single DATABASE_URL
+# WHY dj_database_url: Supabase (and Render) provide a single DATABASE_URL
 # connection string. Without this, you'd need to manually parse the string
 # into host/port/name/user/password — error-prone and fragile.
 #
 # conn_max_age=600: Keeps DB connections alive for 10 minutes (connection
 # pooling). Without this, Django opens a NEW connection per HTTP request —
-# catastrophic at scale with Neon's connection limits.
+# costly at scale with Supabase's serverless connection limits.
 #
-# ssl_require=True: Neon requires SSL. Without this, the connection is
-# rejected with "SSL connection required".
+# SSL: Supabase includes ?sslmode=require in its connection string already.
+# We set ssl_require=True only when the URL doesn't already specify sslmode,
+# to prevent conflicting SSL parameters and connection errors.
 import dj_database_url
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
+    # Supabase connection strings include ?sslmode=require natively.
+    # Only force ssl_require if it's not already present in the URL.
+    _ssl_required = "sslmode" not in DATABASE_URL
     DATABASES = {
         "default": dj_database_url.parse(
             DATABASE_URL,
             conn_max_age=600,
-            ssl_require=True,
+            ssl_require=_ssl_required,
         )
     }
 else:
