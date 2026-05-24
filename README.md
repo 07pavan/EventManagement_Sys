@@ -14,7 +14,7 @@
 
 <br/>
 
-**🌐 Live Demo:** &nbsp;[goattend.vercel.app](https://event-management-sys-ashy.vercel.app/) &nbsp;|&nbsp; **🔗 API:** &nbsp;[eventmanagement-api-5krr.onrender.com](https://eventmanagement-api-5krr.onrender.com/health/)
+**🌐 Live Demo:** &nbsp;[goattend.vercel.app](https://go-attend.vercel.app/) &nbsp;|&nbsp; **🔗 API:** &nbsp;[eventmanagement-api-5krr.onrender.com](https://eventmanagement-api-5krr.onrender.com/health/)
 
 <br/>
 
@@ -45,11 +45,12 @@
 - Defense-in-depth: `is_staff` / `is_superuser` impossible via the public API
 
 ### 🎭 Organizer Dashboard
-- **Full CRUD** — Create, edit, delete events with image upload (Cloudinary)
+- **Full CRUD** — Create, edit, delete events with robust image upload (Cloudinary CDN with automatic unique UUID naming to prevent image overwriting)
 - **Live stats panel** — Total revenue, tickets sold, scanned count, live event count
 - **Attendees List** — Per-event table of ticket holders with scan status
 - Status badges: `live` / `draft` / `past` / `sold_out` computed server-side
 - Search & sort events from the dashboard
+- **Robust Edit & Preview UI** — Built-in image preview loading states, and automatic error fallbacks to graceful default cards if image fails to load
 
 ### 🎟️ Member Experience
 - Discover events with **category filter** (Music, Tech, Food, Arts), search, and date filter
@@ -101,6 +102,7 @@
 │  /api/tickets/      tickets app (purchase, verify, scan)│
 │  /api/organizer/    organizer-only dashboard endpoints  │
 │  /health/           Render health check                 │
+│  /health/cloudinary/ Cloudinary storage status & ping   │
 └─────────────────────────────────────────────────────│───┘
                                                       │
               ┌───────────────────┬──────────────────┘
@@ -239,6 +241,13 @@ Base URL: `https://eventmanagement-api-5krr.onrender.com/api`
 | `GET` | `/user/tickets/` | Auth | Own tickets with `qr_data`, `attendee_name`, `event_status` |
 | `POST` | `/tickets/verify/` | Organizer | Scan ticket by hash. Body: `{ticket_hash: "..."}` |
 | `POST` | `/tickets/<hash>/scan/` | Organizer | Alternative scan endpoint via URL param |
+
+### Health & Diagnostics (`/health/`)
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/health/` | Public | Core platform health check (returns `{"status": "ok"}`) |
+| `GET` | `/health/cloudinary/` | Public | Live Cloudinary connectivity test & credentials status check |
 
 ### Response Shapes
 
@@ -565,7 +574,7 @@ This project is open source and available under the [MIT License](LICENSE).
 **Built with ❤️ using Django + Vanilla JS**
 
 [![GitHub](https://img.shields.io/badge/GitHub-07pavan-181717?style=flat-square&logo=github)](https://github.com/07pavan/EventManagement_Sys)
-[![Live Demo](https://img.shields.io/badge/Live_Demo-GoAttend-630ed4?style=flat-square&logo=vercel)](https://event-management-sys-ashy.vercel.app/)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-GoAttend-630ed4?style=flat-square&logo=vercel)](https://go-attend.vercel.app/)
 [![API Health](https://img.shields.io/badge/API-Healthy-46E3B7?style=flat-square&logo=render)](https://eventmanagement-api-5krr.onrender.com/health/)
 
 *GoAttend — Where every event finds its audience.*
