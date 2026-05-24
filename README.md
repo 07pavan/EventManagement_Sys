@@ -6,7 +6,7 @@
 
 [![Django](https://img.shields.io/badge/Django-6.0.5-0c4b33?style=for-the-badge&logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![DRF](https://img.shields.io/badge/Django_REST-3.17-a30000?style=for-the-badge&logo=django&logoColor=white)](https://www.django-rest-framework.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169e1?style=for-the-badge&logo=postgresql&logoColor=white)](https://neon.tech/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-3ecf8e?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 [![Vercel](https://img.shields.io/badge/Frontend-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
 [![Render](https://img.shields.io/badge/Backend-Render-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://render.com/)
 [![JWT](https://img.shields.io/badge/Auth-JWT-d63aff?style=for-the-badge&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
@@ -62,7 +62,7 @@
 ### 📷 QR Scanner (Organizer)
 - **Live camera scan** using `html5-qrcode` (browser media API)
 - **Manual hash entry** for fallback verification
-- `POST /api/tickets/verify/` → marks ticket as scanned in Neon DB
+- `POST /api/tickets/verify/` → marks ticket as scanned in Supabase DB
 - Shows: attendee name, email, event name, venue, price paid
 - Handles **409 Already Scanned** with yellow warning card
 - Scan history panel (last 20 scans)
@@ -108,7 +108,7 @@
               ┌───────────────────┬──────────────────┘
               │                   │
 ┌─────────────▼──────┐  ┌────────▼────────┐
-│   Neon PostgreSQL  │  │   Cloudinary    │
+│ Supabase Postgres  │  │   Cloudinary    │
 │  (Serverless DB)   │  │ (Event Images)  │
 │  User, Event,      │  │  Media Storage  │
 │  Ticket tables     │  │  (ephemeral-    │
@@ -152,7 +152,7 @@
 |---------|------|
 | ![Render](https://img.shields.io/badge/-Render-46E3B7?logo=render&logoColor=black) **Render** | Backend hosting (free tier) |
 | ![Vercel](https://img.shields.io/badge/-Vercel-000?logo=vercel&logoColor=white) **Vercel** | Frontend hosting (free tier) |
-| ![Neon](https://img.shields.io/badge/-Neon-00e699?logo=postgresql&logoColor=black) **Neon** | Serverless PostgreSQL |
+| ![Supabase](https://img.shields.io/badge/-Supabase-3ecf8e?logo=supabase&logoColor=white) **Supabase** | Serverless PostgreSQL |
 | ![Cloudinary](https://img.shields.io/badge/-Cloudinary-3448C5?logo=cloudinary&logoColor=white) **Cloudinary** | Media CDN |
 | ![GitHub](https://img.shields.io/badge/-GitHub-181717?logo=github&logoColor=white) **GitHub** | Source control + CI trigger |
 
@@ -367,9 +367,9 @@ SECRET_KEY=your-secret-key-here
 DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1
 
-# Database (use SQLite locally or Neon for full-stack)
+# Database (use SQLite locally or Supabase for full-stack)
 DATABASE_URL=sqlite:///db.sqlite3
-# Or Neon: DATABASE_URL=postgresql://user:pass@host/dbname?sslmode=require
+# Or Supabase: DATABASE_URL=postgresql://postgres.xxx:password@aws-0-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require
 
 # Cloudinary (optional locally — images won't upload without it)
 CLOUDINARY_CLOUD_NAME=your_cloud_name
@@ -430,7 +430,7 @@ The `frontend/config.js` already points to `http://127.0.0.1:8001/api` for local
 SECRET_KEY          = <generate a long random string>
 DEBUG               = False
 ALLOWED_HOSTS       = your-app.onrender.com,localhost
-DATABASE_URL        = postgresql://...  (from Neon)
+DATABASE_URL        = postgresql://...  (from Supabase Connection Pooler)
 CLOUDINARY_CLOUD_NAME / API_KEY / API_SECRET
 CORS_ALLOWED_ORIGINS = https://your-app.vercel.app
 ```
@@ -450,10 +450,10 @@ RENDER_API_URL = https://your-app.onrender.com
    - Run `node build.js` (generates `frontend/config.js` with production API URL)
    - Serve the `frontend/` directory
 
-### Database → Neon
+### Database → Supabase
 
-1. Create a free project at [neon.tech](https://neon.tech/)
-2. Copy the connection string into `DATABASE_URL` on Render
+1. Create a free project at [supabase.com](https://supabase.com/)
+2. Copy the Connection Pooler connection string (Transaction Mode, port 6543) into `DATABASE_URL` on Render
 3. First deploy runs `python manage.py migrate` automatically via Render's pre-deploy hook
 
 ---
