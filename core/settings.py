@@ -60,7 +60,7 @@ if not SECRET_KEY:
 # ---------------------------------------------------------------------------
 ALLOWED_HOSTS = os.environ.get(
     "ALLOWED_HOSTS",
-    "localhost,127.0.0.1"
+    "localhost,127.0.0.1,.onrender.com,eventmanagement-api-5krr.onrender.com"
 ).split(",")
 
 # ---------------------------------------------------------------------------
@@ -304,7 +304,7 @@ SIMPLE_JWT = {
 # Without CORS headers, browsers will block ALL fetch() calls from the frontend.
 CORS_ALLOWED_ORIGINS = os.environ.get(
     "CORS_ALLOWED_ORIGINS",
-    "http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173",
+    "http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173,https://eventmanagement-api-5krr.onrender.com,https://go-attend.vercel.app",
 ).split(",")
 
 # In DEBUG mode, allow all origins for convenience (file:// opened HTML files)
@@ -332,7 +332,7 @@ CORS_ALLOW_HEADERS = [
 # Vercel frontend in production (POST/PUT/DELETE will all fail with 403).
 CSRF_TRUSTED_ORIGINS = os.environ.get(
     "CSRF_TRUSTED_ORIGINS",
-    "http://localhost:3000,http://localhost:5173",
+    "http://localhost:3000,http://localhost:5173,https://eventmanagement-api-5krr.onrender.com,https://go-attend.vercel.app",
 ).split(",")
 
 # ---------------------------------------------------------------------------
