@@ -64,6 +64,12 @@ class EventListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         """Only show published events — tickets_remaining annotated at DB level to avoid N+1."""
+        # Automatically delete events that have been expired for more than 24 hours
+        from django.utils import timezone
+        from datetime import timedelta
+        cutoff = timezone.now() - timedelta(hours=24)
+        Event.objects.filter(date__lt=cutoff).delete()
+
         return (
             Event.objects
             .select_related("organizer")
@@ -139,6 +145,12 @@ class OrganizerEventListView(generics.ListAPIView):
         All four values are computed in a SINGLE query, eliminating the
         N+1 that previously existed for scanned_count and revenue.
         """
+        # Automatically delete events that have been expired for more than 24 hours
+        from django.utils import timezone
+        from datetime import timedelta
+        cutoff = timezone.now() - timedelta(hours=24)
+        Event.objects.filter(date__lt=cutoff).delete()
+
         return (
             Event.objects
             .select_related("organizer")
