@@ -264,6 +264,47 @@ async function logout() {
   window.location.href = 'login.html';
 }
 
+/**
+ * Request a password reset email.
+ * Sends { email } to POST /api/auth/password-reset/
+ * Always resolves (anti-enumeration: backend always returns 200).
+ */
+async function requestPasswordReset(email) {
+  return apiFetch('/auth/password-reset/', {
+    method: 'POST',
+    body:   JSON.stringify({ email }),
+  });
+}
+
+/**
+ * Confirm a password reset with the token from the email link.
+ * Sends { uid, token, new_password } to POST /api/auth/password-reset/confirm/
+ * Throws on bad/expired token or weak password.
+ */
+async function confirmPasswordReset(uid, token, new_password) {
+  return apiFetch('/auth/password-reset/confirm/', {
+    method: 'POST',
+    body:   JSON.stringify({ uid, token, new_password }),
+  });
+}
+
+/**
+ * Update the currently logged-in user's profile.
+ * Uses multipart/form-data so the avatar image file can be included.
+ * Accepts a FormData object containing any of:
+ *   first_name, last_name, bio, avatar (File)
+ *
+ * After a successful update, refreshes the localStorage cache with the
+ * latest profile returned from GET /auth/profile/ so the UI stays in sync.
+ */
+async function updateProfile(formData) {
+  const updated = await apiFetchMultipart('/auth/profile/', 'PATCH', formData);
+  // Refresh localStorage cache so pages that read getUser() stay consistent
+  setUser(updated);
+  return updated;
+}
+
+
 // ── Events ────────────────────────────────────────────────────────────────
 
 function fetchEvents(params = {}) {

@@ -422,3 +422,42 @@ LOGGING = {
         },
     },
 }
+
+# ---------------------------------------------------------------------------
+# Email — Password Reset
+# ---------------------------------------------------------------------------
+# WHY two backends:
+#   Development (DEBUG=True)  → emails print to console. Zero config needed,
+#                               no SMTP server required, no credentials to set.
+#   Production  (DEBUG=False) → real SMTP. All credentials come from env vars.
+#
+# Required production env vars:
+#   EMAIL_HOST          — e.g. smtp.gmail.com
+#   EMAIL_PORT          — e.g. 587
+#   EMAIL_HOST_USER     — e.g. noreply@yourdomain.com
+#   EMAIL_HOST_PASSWORD — app password / SMTP credential
+#   DEFAULT_FROM_EMAIL  — display sender, e.g. "GoAttend <noreply@yourdomain.com>"
+#   FRONTEND_URL        — base URL of the frontend, e.g. https://go-attend.vercel.app
+#                         Used to build the reset link embedded in the email body.
+
+if DEBUG:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+else:
+    EMAIL_BACKEND   = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST      = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+    EMAIL_PORT      = int(os.environ.get("EMAIL_PORT", "587"))
+    EMAIL_USE_TLS   = True
+    EMAIL_HOST_USER     = os.environ.get("EMAIL_HOST_USER", "")
+    EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DEFAULT_FROM_EMAIL",
+    "GoAttend <noreply@goattend.app>",
+)
+
+# Base URL of the frontend — used to build the password-reset link in emails.
+# In dev this points to the file-opened HTML; in prod it points to Vercel.
+FRONTEND_URL = os.environ.get(
+    "FRONTEND_URL",
+    "http://127.0.0.1:5500/frontend",   # default: typical VS Code Live Server port
+)

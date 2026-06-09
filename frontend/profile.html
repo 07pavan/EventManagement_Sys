@@ -57,6 +57,10 @@ body { font-family:'Inter',sans-serif; background:#fef7ff; min-height:max(884px,
 .nav-tab { transition:all .2s ease; }
 .hide-scrollbar::-webkit-scrollbar { display:none; }
 .hide-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
+.modal-backdrop{background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+input[type=text],input[type=number],input[type=datetime-local],select,textarea{width:100%;padding:10px 14px;border:1px solid #ccc3d8;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;background:#fff;outline:none;transition:border-color .2s,box-shadow .2s}
+input:focus,select:focus,textarea:focus{border-color:#630ed4;box-shadow:0 0 0 3px rgba(99,14,212,.12)}
+label{display:block;font-size:12px;font-weight:600;color:#4a4455;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px}
 </style>
 </head>
 <body class="text-on-surface pb-28">
@@ -117,8 +121,9 @@ body { font-family:'Inter',sans-serif; background:#fef7ff; min-height:max(884px,
       <!-- Centered avatar + name -->
       <div class="relative z-10 flex flex-col items-center text-center -mb-12">
         <div class="avatar-ring mb-sm shadow-xl">
-          <div id="avatar-placeholder" class="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-on-primary text-3xl font-extrabold">
+          <div id="avatar-placeholder" class="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-on-primary text-3xl font-extrabold relative overflow-hidden">
             <span id="avatar-initials">?</span>
+            <img id="avatar-img" src="" alt="Avatar" class="absolute inset-0 w-full h-full object-cover hidden"/>
           </div>
         </div>
       </div>
@@ -176,7 +181,7 @@ body { font-family:'Inter',sans-serif; background:#fef7ff; min-height:max(884px,
     <section class="px-margin-mobile mb-xl">
       <h3 class="text-headline-md font-bold mb-md">Account</h3>
       <div class="glass-card rounded-xl overflow-hidden border border-outline-variant/20 divide-y divide-outline-variant/20">
-        <div class="flex items-center gap-md px-lg py-md hover:bg-surface-container transition-colors cursor-pointer active:scale-[.98]">
+        <div onclick="openModal()" class="flex items-center gap-md px-lg py-md hover:bg-surface-container transition-colors cursor-pointer active:scale-[.98]">
           <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
             <span class="material-symbols-outlined text-primary text-[20px]">person</span>
           </div>
@@ -224,6 +229,56 @@ body { font-family:'Inter',sans-serif; background:#fef7ff; min-height:max(884px,
   </div><!-- /profile-content -->
 </main>
 
+<!-- ── Edit Profile Modal ── -->
+<div id="profile-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop" onclick="handleModalBackdrop(event)">
+  <div class="bg-surface w-full max-w-lg rounded-lg shadow-2xl max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between px-lg py-md border-b border-outline-variant/30 sticky top-0 bg-surface z-10">
+      <h3 class="font-bold text-headline-md">Edit Profile</h3>
+      <button onclick="closeModal()" class="text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <form id="profile-form" class="p-lg space-y-md" onsubmit="handleSubmitProfile(event)">
+      <div id="form-error" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm"></div>
+
+      <!-- Avatar preview and upload -->
+      <div class="flex flex-col items-center gap-sm">
+        <label>Avatar Picture</label>
+        <div class="avatar-ring shadow-lg relative cursor-pointer" onclick="document.getElementById('f-avatar').click()">
+          <div id="modal-avatar-placeholder" class="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-on-primary text-4xl font-extrabold overflow-hidden relative">
+            <span id="modal-avatar-initials">?</span>
+            <img id="modal-avatar-img" src="" alt="Avatar Preview" class="absolute inset-0 w-full h-full object-cover hidden"/>
+          </div>
+          <!-- Upload overlay icon -->
+          <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200">
+            <span class="material-symbols-outlined text-white text-3xl">photo_camera</span>
+          </div>
+        </div>
+        <input type="file" id="f-avatar" accept="image/*" class="hidden" onchange="previewAvatar(event)"/>
+        <button type="button" onclick="document.getElementById('f-avatar').click()" class="text-xs text-primary font-semibold hover:underline">Change Avatar</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-md">
+        <div>
+          <label>First Name</label>
+          <input type="text" id="f-first-name" placeholder="e.g. John"/>
+        </div>
+        <div>
+          <label>Last Name</label>
+          <input type="text" id="f-last-name" placeholder="e.g. Doe"/>
+        </div>
+      </div>
+      <div>
+        <label>Bio</label>
+        <textarea id="f-bio" rows="3" placeholder="Tell other attendees about yourself…" style="width:100%;padding:10px 14px;border:1px solid #ccc3d8;border-radius:10px;font-family:Inter,sans-serif;font-size:14px;resize:vertical"></textarea>
+      </div>
+
+      <div class="flex gap-sm pt-sm">
+        <button type="button" onclick="closeModal()" class="flex-1 border-2 border-primary text-primary py-3 rounded-full font-bold active:scale-95 transition-all">Cancel</button>
+        <button type="submit" id="submit-btn" class="flex-1 bg-primary text-white py-3 rounded-full font-bold shadow-lg shadow-primary/25 active:scale-95 transition-all">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- Bottom Nav — 4 tabs: Discover, My Tickets, Liked, Profile -->
 <nav class="fixed bottom-0 w-full z-50 rounded-t-lg bg-surface/80 backdrop-blur-xl flex justify-around items-center px-gutter py-sm shadow-[0_-4px_24px_rgba(124,58,237,0.1)]">
   <a href="index.html" class="nav-tab flex flex-col items-center justify-center text-on-surface-variant px-4 py-2 hover:text-primary transition-all duration-200 active:scale-90">
@@ -247,6 +302,7 @@ body { font-family:'Inter',sans-serif; background:#fef7ff; min-height:max(884px,
 <script src="config.js"></script>
 <script src="api.js"></script>
 <script>
+let currentProfile = null;
 const PLACEHOLDER = 'https://lh3.googleusercontent.com/aida-public/AB6AXuBBG0kETVkyKmuooroSqWkqUKcaDZjoUS446cKpcRrRBQoMUtbw8EgGnXqVe8fTqIWuGOHGJQlyx6Y1yoMQ0kM3GNKRnsoU4gQqMVfEswZ7Cp2tyrV2eyiVdN0b3MkbP9p7T7STCiMh_PqsWcYYK0Q55EXcRAtKXe3Rn2-kjEI8unDAKB7ui5SCRNch9rIOJ-6ug1jlhYkMk3mZ9NsRQ3ZdzjOIncfg4JBH1NRg7OMERIGdPX3UljTD8DDXr8otuRPzv6F-6ImKBYo';
 
 window.addEventListener('DOMContentLoaded', async () => {
@@ -262,6 +318,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       apiFetch('/auth/profile/'),
       fetchMyTickets()
     ]);
+
+    currentProfile = profile;
 
     document.getElementById('skeleton-state').classList.add('hidden');
     document.getElementById('profile-content').classList.remove('hidden');
@@ -279,7 +337,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('profile-content').classList.remove('hidden');
     // Fallback to cached user
     const cached = getUser();
-    if (cached) renderProfile(cached);
+    if (cached) {
+      currentProfile = cached;
+      renderProfile(cached);
+    }
   }
 });
 
@@ -289,7 +350,20 @@ function renderProfile(profile) {
   const initials = name.slice(0, 2).toUpperCase();
   document.getElementById('avatar-initials').textContent = initials;
 
-  document.getElementById('display-name').textContent = profile.username;
+  const avatarImg = document.getElementById('avatar-img');
+  const avatarInitials = document.getElementById('avatar-initials');
+  if (profile.avatar) {
+    avatarImg.src = profile.avatar;
+    avatarImg.classList.remove('hidden');
+    avatarInitials.classList.add('hidden');
+  } else {
+    avatarImg.classList.add('hidden');
+    avatarInitials.classList.remove('hidden');
+  }
+
+  // Display Name: combine first name and last name, fallback to username
+  const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || profile.username;
+  document.getElementById('display-name').textContent = fullName;
   document.getElementById('display-email').textContent = profile.email || '';
 
   // Role badge
@@ -297,13 +371,11 @@ function renderProfile(profile) {
   if (profile.role === 'organizer') {
     badge.textContent = 'ORGANIZER';
     badge.className = 'text-label-caps px-md py-xs rounded-full font-bold bg-tertiary/10 text-tertiary border border-tertiary/20';
-    // organizer dashboard removed from profile
   } else {
     badge.textContent = 'MEMBER';
     badge.className = 'text-label-caps px-md py-xs rounded-full font-bold bg-primary/10 text-primary border border-primary/20';
   }
 }
-
 
 async function doLogout() {
   const btn = event.currentTarget;
@@ -313,8 +385,106 @@ async function doLogout() {
 }
 
 function handleSettings() {
-  // Future: open settings drawer
-  alert('Settings coming soon!');
+  openModal();
+}
+
+// ── Profile Modal Logic ───────────────────────────────────────────────────
+
+function openModal() {
+  if (!currentProfile) return;
+  
+  // Fill inputs
+  document.getElementById('f-first-name').value = currentProfile.first_name || '';
+  document.getElementById('f-last-name').value = currentProfile.last_name || '';
+  document.getElementById('f-bio').value = currentProfile.bio || '';
+  
+  // Reset file input
+  document.getElementById('f-avatar').value = '';
+  document.getElementById('form-error').classList.add('hidden');
+  document.getElementById('form-error').textContent = '';
+  
+  // Render avatar preview in modal
+  const modalAvatarImg = document.getElementById('modal-avatar-img');
+  const modalAvatarInitials = document.getElementById('modal-avatar-initials');
+  
+  const name = currentProfile.username || currentProfile.email || 'U';
+  modalAvatarInitials.textContent = name.slice(0, 2).toUpperCase();
+  
+  if (currentProfile.avatar) {
+    modalAvatarImg.src = currentProfile.avatar;
+    modalAvatarImg.classList.remove('hidden');
+    modalAvatarInitials.classList.add('hidden');
+  } else {
+    modalAvatarImg.classList.add('hidden');
+    modalAvatarInitials.classList.remove('hidden');
+  }
+  
+  // Show modal
+  document.getElementById('profile-modal').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('profile-modal').classList.add('hidden');
+}
+
+function handleModalBackdrop(e) {
+  if (e.target === document.getElementById('profile-modal')) closeModal();
+}
+
+function previewAvatar(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  const modalAvatarImg = document.getElementById('modal-avatar-img');
+  const modalAvatarInitials = document.getElementById('modal-avatar-initials');
+  
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    modalAvatarImg.src = evt.target.result;
+    modalAvatarImg.classList.remove('hidden');
+    modalAvatarInitials.classList.add('hidden');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function handleSubmitProfile(e) {
+  e.preventDefault();
+  
+  const submitBtn = document.getElementById('submit-btn');
+  const formError = document.getElementById('form-error');
+  
+  // Disable submit button during upload
+  submitBtn.disabled = true;
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = 'Saving…';
+  formError.classList.add('hidden');
+  formError.textContent = '';
+  
+  const firstName = document.getElementById('f-first-name').value.trim();
+  const lastName = document.getElementById('f-last-name').value.trim();
+  const bio = document.getElementById('f-bio').value.trim();
+  const avatarFile = document.getElementById('f-avatar').files[0];
+  
+  const formData = new FormData();
+  formData.append('first_name', firstName);
+  formData.append('last_name', lastName);
+  formData.append('bio', bio);
+  if (avatarFile) {
+    formData.append('avatar', avatarFile);
+  }
+  
+  try {
+    const updated = await updateProfile(formData);
+    currentProfile = updated;
+    renderProfile(updated);
+    closeModal();
+  } catch (err) {
+    formError.textContent = err.detail || 'Failed to update profile. Please try again.';
+    formError.classList.remove('hidden');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+  }
 }
 </script>
 </body>

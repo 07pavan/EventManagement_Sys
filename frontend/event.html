@@ -103,6 +103,7 @@ function renderEvent(ev) {
   document.title = ev.title + ' — GoAttend';
   document.getElementById('skeleton').classList.add('hidden');
   const sold = ev.tickets_remaining === 0;
+  const expired = ev.is_upcoming === false;
   document.getElementById('content').innerHTML = `
     <section class="relative w-full aspect-[4/3] md:aspect-[21/9] overflow-hidden">
       <img src="${ev.image || PLACEHOLDER}" alt="${ev.title}" class="w-full h-full object-cover" onerror="this.src='${PLACEHOLDER}'"/>
@@ -112,7 +113,7 @@ function renderEvent(ev) {
       <div class="bg-surface p-lg rounded-lg shadow-[0_4px_24px_rgba(124,58,237,0.12)] border border-outline-variant/30">
         <div class="flex flex-wrap gap-sm mb-md">
           <span class="bg-primary/10 text-primary text-label-caps px-sm py-xs rounded-full">${EMOJI[ev.category] || '🎉'} ${ev.category_display}</span>
-          ${sold ? '<span class="bg-red-100 text-red-700 text-label-caps px-sm py-xs rounded-full">SOLD OUT</span>' : `<span class="bg-green-100 text-green-700 text-label-caps px-sm py-xs rounded-full">${ev.tickets_remaining} TICKETS LEFT</span>`}
+          ${expired ? '<span class="bg-outline-variant text-outline text-label-caps px-sm py-xs rounded-full border border-outline/30">EVENT CLOSED</span>' : (sold ? '<span class="bg-red-100 text-red-700 text-label-caps px-sm py-xs rounded-full">SOLD OUT</span>' : `<span class="bg-green-100 text-green-700 text-label-caps px-sm py-xs rounded-full">${ev.tickets_remaining} TICKETS LEFT</span>`)}
         </div>
         <h2 class="text-headline-lg font-bold mb-md">${ev.title}</h2>
         <div class="space-y-md">
@@ -167,10 +168,26 @@ function renderEvent(ev) {
   document.getElementById('content').classList.remove('hidden');
 
   // Buy bar
-  document.getElementById('buy-price').textContent = fmtPrice(ev.price);
-  document.getElementById('tickets-left-label').textContent = sold ? '😞 Sold Out' : `${ev.tickets_remaining} remaining`;
-  document.getElementById('buy-btn').disabled = sold;
-  if (sold) document.getElementById('buy-btn').textContent = 'SOLD OUT';
+  const priceLabel = document.getElementById('buy-price');
+  priceLabel.textContent = fmtPrice(ev.price);
+  if (expired) {
+    priceLabel.classList.add('opacity-40');
+  } else {
+    priceLabel.classList.remove('opacity-40');
+  }
+
+  const leftLabel = document.getElementById('tickets-left-label');
+  const buyBtn = document.getElementById('buy-btn');
+
+  if (expired) {
+    leftLabel.textContent = '❌ Event Ended';
+    buyBtn.disabled = true;
+    buyBtn.textContent = 'EVENT CLOSED';
+  } else {
+    leftLabel.textContent = sold ? '😞 Sold Out' : `${ev.tickets_remaining} remaining`;
+    buyBtn.disabled = sold;
+    buyBtn.textContent = sold ? 'SOLD OUT' : 'GET TICKET';
+  }
   document.getElementById('buy-bar').classList.remove('hidden');
 }
 

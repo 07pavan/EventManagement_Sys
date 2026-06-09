@@ -305,6 +305,7 @@ function renderCard(ev) {
   const emoji = CATEGORY_EMOJI[ev.category] || '🎉';
   const img   = ev.image || PLACEHOLDER;
   const sold  = ev.tickets_remaining === 0;
+  const expired = ev.is_upcoming === false;
   const liked = isLiked(ev.id);
   const evJson = encodeURIComponent(JSON.stringify(ev));
   return `
@@ -313,7 +314,7 @@ function renderCard(ev) {
       <img src="${img}" alt="${ev.title}" class="w-full h-full object-cover" onerror="this.src='${PLACEHOLDER}'"/>
       <div class="absolute top-sm right-sm bg-white/90 backdrop-blur px-md py-xs rounded-full text-label-caps font-bold text-primary shadow-sm">${fmtPrice(ev.price)}</div>
       <div class="absolute top-sm left-sm bg-primary/90 text-white px-sm py-xs rounded-full text-[10px] font-bold uppercase">${emoji} ${ev.category_display}</div>
-      ${sold ? '<div class="absolute inset-0 bg-black/50 flex items-center justify-center"><span class="bg-red-600 text-white px-md py-sm rounded-full font-bold text-label-caps">SOLD OUT</span></div>' : ''}
+      ${expired ? '<div class="absolute inset-0 bg-black/60 flex items-center justify-center"><span class="bg-outline text-white px-md py-sm rounded-full font-bold text-label-caps border border-white/20">CLOSED</span></div>' : (sold ? '<div class="absolute inset-0 bg-black/50 flex items-center justify-center"><span class="bg-red-600 text-white px-md py-sm rounded-full font-bold text-label-caps">SOLD OUT</span></div>' : '')}
     </div>
     <div class="p-md">
       <div class="flex items-center text-outline mb-xs gap-1">
