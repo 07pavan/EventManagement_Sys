@@ -304,6 +304,14 @@ async function updateProfile(formData) {
   return updated;
 }
 
+async function changePassword(oldPassword, newPassword) {
+  return apiFetch('/auth/change-password/', {
+    method: 'POST',
+    body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }),
+  });
+}
+
+
 
 // ── Events ────────────────────────────────────────────────────────────────
 

@@ -22,6 +22,7 @@ class AccountsAPITests(APITestCase):
         self.profile_url = reverse("auth-profile")
         self.reset_request_url = reverse("password-reset-request")
         self.reset_confirm_url = reverse("password-reset-confirm")
+        self.change_password_url = reverse("auth-change-password")
 
     def test_password_reset_flow_success(self):
         """Test full password reset flow with valid token and email."""
@@ -143,3 +144,51 @@ class AccountsAPITests(APITestCase):
         self.assertEqual(self.user.role, "regular")
         self.assertEqual(self.user.email, "testuser@example.com")
         self.assertEqual(self.user.username, "testuser")
+
+    def test_change_password_success(self):
+        """Test password change with correct old password and valid new password."""
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(self.change_password_url, {
+            "old_password": "TestPassword123!",
+            "new_password": "NewSecurePassword456!"
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["detail"], "Password has been updated successfully.")
+
+        # Try to authenticate with the new password
+        login_url = reverse("auth-token-obtain")
+        login_response = self.client.post(login_url, {
+            "username": "testuser",
+            "password": "NewSecurePassword456!"
+        })
+        self.assertEqual(login_response.status_code, status.HTTP_200_OK)
+        self.assertIn("access", login_response.data)
+
+    def test_change_password_incorrect_old(self):
+        """Test password change fails when old password is wrong."""
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(self.change_password_url, {
+            "old_password": "WrongPassword123!",
+            "new_password": "NewSecurePassword456!"
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Incorrect current password.")
+
+    def test_change_password_validation_error(self):
+        """Test password change fails when new password is weak."""
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(self.change_password_url, {
+            "old_password": "TestPassword123!",
+            "new_password": "123"
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("detail", response.data)
+
+    def test_change_password_unauthenticated(self):
+        """Test password change requires authentication."""
+        response = self.client.post(self.change_password_url, {
+            "old_password": "TestPassword123!",
+            "new_password": "NewSecurePassword456!"
+        })
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+

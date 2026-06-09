@@ -339,3 +339,48 @@ class PasswordResetConfirmView(generics.GenericAPIView):
             {"detail": "Password has been reset successfully. You can now sign in."},
             status=status.HTTP_200_OK,
         )
+
+
+class PasswordChangeView(generics.GenericAPIView):
+    """
+    POST /api/auth/change-password/
+
+    Allows authenticated users to change their password in-app.
+    Requires the current (old) password to verify identity.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        old_password = request.data.get("old_password", "").strip()
+        new_password = request.data.get("new_password", "").strip()
+
+        if not old_password or not new_password:
+            return Response(
+                {"detail": "Both old_password and new_password are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not user.check_password(old_password):
+            return Response(
+                {"detail": "Incorrect current password."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Run Django's password validators
+        try:
+            validate_password(new_password, user=user)
+        except DjangoValidationError as exc:
+            return Response(
+                {"detail": " ".join(exc.messages)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.set_password(new_password)
+        user.save(update_fields=["password"])
+
+        return Response(
+            {"detail": "Password has been updated successfully."},
+            status=status.HTTP_200_OK,
+        )
+

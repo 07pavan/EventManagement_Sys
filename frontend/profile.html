@@ -201,7 +201,7 @@ label{display:block;font-size:12px;font-weight:600;color:#4a4455;letter-spacing:
           </div>
           <span class="material-symbols-outlined text-outline">chevron_right</span>
         </div>
-        <div class="flex items-center gap-md px-lg py-md hover:bg-surface-container transition-colors cursor-pointer active:scale-[.98]">
+        <div onclick="openPrivacyModal()" class="flex items-center gap-md px-lg py-md hover:bg-surface-container transition-colors cursor-pointer active:scale-[.98]">
           <div class="w-10 h-10 bg-outline-variant/40 rounded-full flex items-center justify-center">
             <span class="material-symbols-outlined text-on-surface-variant text-[20px]">lock</span>
           </div>
@@ -278,6 +278,57 @@ label{display:block;font-size:12px;font-weight:600;color:#4a4455;letter-spacing:
     </form>
   </div>
 </div>
+
+<!-- ── Privacy & Security Modal ── -->
+<div id="privacy-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop" onclick="handlePrivacyModalBackdrop(event)">
+  <div class="bg-surface w-full max-w-lg rounded-lg shadow-2xl max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between px-lg py-md border-b border-outline-variant/30 sticky top-0 bg-surface z-10">
+      <h3 class="font-bold text-headline-md">Privacy & Security</h3>
+      <button onclick="closePrivacyModal()" class="text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    
+    <div class="p-lg space-y-lg">
+      <!-- Section 1: Change Password directly -->
+      <div>
+        <h4 class="font-bold text-body-lg text-primary mb-md">Change Password</h4>
+        <form id="change-password-form" class="space-y-md" onsubmit="handleSubmitChangePassword(event)">
+          <div id="change-password-error" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm"></div>
+          <div id="change-password-success" class="hidden bg-green-50 border border-green-200 text-green-700 rounded-xl p-3 text-sm"></div>
+          
+          <div>
+            <label>Current Password</label>
+            <input type="password" id="p-current-password" required placeholder="••••••••" style="width:100%;padding:10px 14px;border:1px solid #ccc3d8;border-radius:10px;font-size:14px;background:#fff;outline:none"/>
+          </div>
+          <div>
+            <label>New Password</label>
+            <input type="password" id="p-new-password" required placeholder="••••••••" style="width:100%;padding:10px 14px;border:1px solid #ccc3d8;border-radius:10px;font-size:14px;background:#fff;outline:none"/>
+          </div>
+          <div>
+            <label>Confirm New Password</label>
+            <input type="password" id="p-confirm-password" required placeholder="••••••••" style="width:100%;padding:10px 14px;border:1px solid #ccc3d8;border-radius:10px;font-size:14px;background:#fff;outline:none"/>
+          </div>
+          
+          <button type="submit" id="change-password-btn" class="w-full bg-primary text-white py-3 rounded-full font-bold shadow-lg shadow-primary/25 active:scale-95 transition-all">Update Password</button>
+        </form>
+      </div>
+      
+      <hr class="border-outline-variant/30"/>
+      
+      <!-- Section 2: Reset password via email -->
+      <div>
+        <h4 class="font-bold text-body-lg text-primary mb-sm">Forgot Password / Email Reset</h4>
+        <p class="text-on-surface-variant text-body-md mb-md">
+          Want to reset your password via email? We can send a secure password reset link to your email address:
+          <strong id="privacy-email-display" class="text-on-surface"></strong>.
+        </p>
+        <div id="email-reset-error" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm mb-md"></div>
+        <div id="email-reset-success" class="hidden bg-green-50 border border-green-200 text-green-700 rounded-xl p-3 text-sm mb-md"></div>
+        <button type="button" id="email-reset-btn" onclick="handlePrivacyEmailReset()" class="w-full border-2 border-primary text-primary py-3 rounded-full font-bold active:scale-95 transition-all">Send Reset Link</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <!-- Bottom Nav — 4 tabs: Discover, My Tickets, Liked, Profile -->
 <nav class="fixed bottom-0 w-full z-50 rounded-t-lg bg-surface/80 backdrop-blur-xl flex justify-around items-center px-gutter py-sm shadow-[0_-4px_24px_rgba(124,58,237,0.1)]">
@@ -484,6 +535,109 @@ async function handleSubmitProfile(e) {
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
+  }
+}
+
+// ── Privacy & Security Modal Logic ─────────────────────────────────────────
+
+function openPrivacyModal() {
+  if (!currentProfile) return;
+
+  document.getElementById('privacy-email-display').textContent = currentProfile.email || 'N/A';
+
+  // Clear inputs
+  document.getElementById('p-current-password').value = '';
+  document.getElementById('p-new-password').value = '';
+  document.getElementById('p-confirm-password').value = '';
+
+  // Hide messages
+  document.getElementById('change-password-error').classList.add('hidden');
+  document.getElementById('change-password-success').classList.add('hidden');
+  document.getElementById('email-reset-error').classList.add('hidden');
+  document.getElementById('email-reset-success').classList.add('hidden');
+
+  // Show modal
+  document.getElementById('privacy-modal').classList.remove('hidden');
+}
+
+function closePrivacyModal() {
+  document.getElementById('privacy-modal').classList.add('hidden');
+}
+
+function handlePrivacyModalBackdrop(e) {
+  if (e.target === document.getElementById('privacy-modal')) closePrivacyModal();
+}
+
+async function handleSubmitChangePassword(e) {
+  e.preventDefault();
+
+  const errEl = document.getElementById('change-password-error');
+  const succEl = document.getElementById('change-password-success');
+  const btn = document.getElementById('change-password-btn');
+
+  errEl.classList.add('hidden');
+  succEl.classList.add('hidden');
+
+  const currentPass = document.getElementById('p-current-password').value;
+  const newPass = document.getElementById('p-new-password').value;
+  const confirmPass = document.getElementById('p-confirm-password').value;
+
+  if (newPass !== confirmPass) {
+    errEl.textContent = 'New passwords do not match.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = 'Updating…';
+
+  try {
+    const res = await changePassword(currentPass, newPass);
+    succEl.textContent = res.detail || 'Password updated successfully.';
+    succEl.classList.remove('hidden');
+    
+    // Clear password fields on success
+    document.getElementById('p-current-password').value = '';
+    document.getElementById('p-new-password').value = '';
+    document.getElementById('p-confirm-password').value = '';
+  } catch (err) {
+    errEl.textContent = err.detail || 'Failed to update password. Please check your credentials.';
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+async function handlePrivacyEmailReset() {
+  const errEl = document.getElementById('email-reset-error');
+  const succEl = document.getElementById('email-reset-success');
+  const btn = document.getElementById('email-reset-btn');
+
+  errEl.classList.add('hidden');
+  succEl.classList.add('hidden');
+
+  if (!currentProfile || !currentProfile.email) {
+    errEl.textContent = 'Unable to resolve your email address.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = 'Sending Link…';
+
+  try {
+    await requestPasswordReset(currentProfile.email);
+    succEl.textContent = 'Password reset link sent successfully! Check your email inbox.';
+    succEl.classList.remove('hidden');
+  } catch (err) {
+    errEl.textContent = err.detail || 'Failed to send reset email. Please try again.';
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
   }
 }
 </script>
