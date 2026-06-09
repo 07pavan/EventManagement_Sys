@@ -11,6 +11,7 @@ Rate limiting strategy:
   the other passes). DRF throttling is the single source of truth.
 """
 
+import logging
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.password_validation import validate_password
@@ -29,6 +30,7 @@ from .serializers import (
     UserProfileSerializer,
 )
 
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
@@ -252,13 +254,19 @@ class PasswordResetRequestView(generics.GenericAPIView):
             f"If you did not request a password reset, you can safely ignore this email.\n\n"
             f"— The GoAttend Team"
         )
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=True,   # Don't crash the view if mail server is down
-        )
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,   # Raise error so we catch and log it
+            )
+        except Exception as exc:
+            logger.error(
+                f"Failed to send password reset email to {user.email}: {exc}",
+                exc_info=True
+            )
 
         return Response(
             {"detail": "If this email is registered, a reset link has been sent."},
