@@ -218,7 +218,6 @@ USE_TZ = True
 # (e.g., main.abc123.css) so browsers always get fresh files after deploy.
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # ---------------------------------------------------------------------------
 # Media files (Cloudinary in production, local in development)
@@ -231,14 +230,23 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 #          Otherwise → local filesystem (development convenience).
 CLOUDINARY_URL = os.environ.get("CLOUDINARY_URL")
 
+# In modern Django (4.2+), the STORAGES dictionary configuration replaces the
+# deprecated STATICFILES_STORAGE and DEFAULT_FILE_STORAGE settings.
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage" if CLOUDINARY_URL else "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 if CLOUDINARY_URL:
     # Explicitly initialize the Cloudinary SDK from the URL so it works
     # on all environments (Render, local, etc.)
     import cloudinary
     cloudinary.config(cloudinary_url=CLOUDINARY_URL)
 
-    # Redirect Django's file operations to Cloudinary
-    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
     CLOUDINARY_STORAGE = {
         "CLOUDINARY_URL": CLOUDINARY_URL,
     }
