@@ -247,7 +247,7 @@ function renderFilter() {
 function renderTicketCard(t) {
   const ev      = t.event;
   const status  = t.event_status;   // "Upcoming" | "Past" | "Used"
-  const img     = ev.image || PLACEHOLDER;
+  const img     = getImageUrl(ev.image);
 
   const badgeClass = {
     Upcoming: 'bg-primary text-white',

@@ -106,7 +106,7 @@ function renderEvent(ev) {
   const expired = ev.is_upcoming === false;
   document.getElementById('content').innerHTML = `
     <section class="relative w-full aspect-[4/3] md:aspect-[21/9] overflow-hidden">
-      <img src="${ev.image || PLACEHOLDER}" alt="${ev.title}" class="w-full h-full object-cover" onerror="this.src='${PLACEHOLDER}'"/>
+      <img src="${getImageUrl(ev.image)}" alt="${ev.title}" class="w-full h-full object-cover" onerror="this.src='${PLACEHOLDER}'"/>
       <div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
     </section>
     <section class="px-margin-mobile -mt-10 relative z-10">

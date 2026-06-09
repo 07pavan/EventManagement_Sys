@@ -141,7 +141,7 @@ function render() {
 
 function renderLikedCard(ev, i) {
   const emoji = CATEGORY_EMOJI[ev.category] || '🎉';
-  const img   = ev.image || PLACEHOLDER;
+  const img   = getImageUrl(ev.image);
   const sold  = ev.tickets_remaining === 0;
   const evJson = encodeURIComponent(JSON.stringify(ev));
 

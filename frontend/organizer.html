@@ -316,7 +316,7 @@ const STATUS_CFG = {
 
 function renderRow(ev) {
   const cfg   = STATUS_CFG[ev.status_label] || STATUS_CFG.draft;
-  const img   = ev.image || PLACEHOLDER;
+  const img   = getImageUrl(ev.image);
   const price = parseFloat(ev.price) === 0 ? 'FREE' : '₹' + parseFloat(ev.price).toFixed(0);
   const pct   = ev.total_tickets > 0
     ? Math.round((ev.tickets_sold / ev.total_tickets) * 100) : 0;
@@ -403,11 +403,12 @@ function openEditModal(id) {
   // Show existing image preview (the saved Cloudinary URL)
   const prev = document.getElementById('f-image-preview');
   if (ev.image) {
-    currentImageUrl = ev.image;
+    const fullImgUrl = getImageUrl(ev.image);
+    currentImageUrl = fullImgUrl;
     // Test if the image URL actually loads before showing it
     const testImg = new Image();
     testImg.onload = () => {
-      prev.src = ev.image;
+      prev.src = fullImgUrl;
       prev.classList.remove('hidden');
     };
     testImg.onerror = () => {
@@ -415,7 +416,7 @@ function openEditModal(id) {
       currentImageUrl = null;
       prev.classList.add('hidden');
     };
-    testImg.src = ev.image;
+    testImg.src = fullImgUrl;
   } else {
     currentImageUrl = null;
     prev.classList.add('hidden');

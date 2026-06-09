@@ -378,6 +378,15 @@ function fmtPrice(p) {
   return parseFloat(p) === 0 ? 'FREE' : '₹' + parseFloat(p).toFixed(0);
 }
 
+function getImageUrl(url) {
+  const fallback = typeof PLACEHOLDER !== 'undefined' ? PLACEHOLDER : 'https://lh3.googleusercontent.com/aida-public/AB6AXuBBG0kETVkyKmuooroSqWkqUKcaDZjoUS446cKpcRrRBQoMUtbw8EgGnXqVe8fTqIWuGOHGJQlyx6Y1yoMQ0kM3GNKRnsoU4gQqMVfEswZ7Cp2tyrV2eyiVdN0b3MkbP9p7T7STCiMh_PqsWcYYK0Q55EXcRAtKXe3Rn2-kjEI8unDAKB7ui5SCRNch9rIOJ-6ug1jlhYkMk3mZ9NsRQ3ZdzjOIncfg4JBH1NRg7OMERIGdPX3UljTD8DDXr8otuRPzv6F-6ImKBYo';
+  if (!url) return fallback;
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
+  const backendHost = (window.GOATTEND_API || 'http://127.0.0.1:8001/api').replace(/\/api\/?$/, '');
+  const relativePath = url.startsWith('/') ? url : '/' + url;
+  return backendHost + relativePath;
+}
+
 const CATEGORY_EMOJI = { music: '🎵', tech: '💻', food: '🍜', arts: '🎨' };
 
 // ── Liked Events (client-side only — no backend) ──────────────────────────

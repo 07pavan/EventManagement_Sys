@@ -303,7 +303,7 @@ async function loadEvents(append = false) {
 
 function renderCard(ev) {
   const emoji = CATEGORY_EMOJI[ev.category] || '🎉';
-  const img   = ev.image || PLACEHOLDER;
+  const img   = getImageUrl(ev.image);
   const sold  = ev.tickets_remaining === 0;
   const expired = ev.is_upcoming === false;
   const liked = isLiked(ev.id);
