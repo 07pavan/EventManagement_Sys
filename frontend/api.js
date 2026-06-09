@@ -288,6 +288,19 @@ async function confirmPasswordReset(uid, token, new_password) {
   });
 }
 
+async function getSecurityQuestion(email) {
+  const qs = new URLSearchParams({ email }).toString();
+  return apiFetch(`/auth/security-question/?${qs}`);
+}
+
+async function resetPasswordWithQuestion(email, answer, newPassword) {
+  return apiFetch('/auth/password-reset-question/', {
+    method: 'POST',
+    body:   JSON.stringify({ email, security_answer: answer, new_password: newPassword }),
+  });
+}
+
+
 /**
  * Update the currently logged-in user's profile.
  * Uses multipart/form-data so the avatar image file can be included.

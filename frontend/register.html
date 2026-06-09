@@ -119,6 +119,33 @@ body{font-family:'Inter',sans-serif}
         </div>
       </div>
 
+      <!-- Security Question -->
+      <div class="space-y-xs">
+        <label class="text-label-caps text-on-surface-variant ml-1">SECURITY QUESTION</label>
+        <div class="relative glow-focus transition-all rounded-full">
+          <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">help</span>
+          <select id="r-security-question" required
+            class="w-full bg-surface-container-lowest border-2 border-outline-variant focus:border-primary focus:ring-0 rounded-full py-3 pl-12 pr-4 text-body-md transition-all appearance-none">
+            <option value="" disabled selected>Select a security question</option>
+            <option value="first_pet">What was the name of your first pet?</option>
+            <option value="mother_maiden">What is your mother's maiden name?</option>
+            <option value="first_school">What was the name of your first school?</option>
+            <option value="birth_city">In what city were you born?</option>
+            <option value="favorite_movie">What is your favorite movie?</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Security Answer -->
+      <div class="space-y-xs">
+        <label class="text-label-caps text-on-surface-variant ml-1">SECURITY ANSWER</label>
+        <div class="relative glow-focus transition-all rounded-full">
+          <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">question_answer</span>
+          <input id="r-security-answer" type="text" required placeholder="Your answer (case-insensitive)"
+            class="w-full bg-surface-container-lowest border-2 border-outline-variant focus:border-primary focus:ring-0 rounded-full py-3 pl-12 pr-4 text-body-md placeholder:text-outline/50 transition-all"/>
+        </div>
+      </div>
+
       <!-- Submit -->
       <div class="pt-sm">
         <button type="submit" id="reg-btn"
@@ -166,6 +193,8 @@ async function doRegister(e) {
   const pass     = document.getElementById('r-pass').value;
   const pass2    = document.getElementById('r-pass2').value;
   const role     = document.getElementById('r-role').value;
+  const question = document.getElementById('r-security-question').value;
+  const answer   = document.getElementById('r-security-answer').value.trim();
 
   if (pass !== pass2) {
     errEl.textContent = 'Passwords do not match.';
@@ -177,7 +206,15 @@ async function doRegister(e) {
   btn.textContent = 'Creating...';
 
   try {
-    await register({ username, email, password: pass, password2: pass2, role });
+    await register({
+      username,
+      email,
+      password: pass,
+      password2: pass2,
+      role,
+      security_question: question,
+      security_answer: answer
+    });
     const isOrg = role === 'organizer';
     document.getElementById('success-title').textContent = isOrg ? 'Organizer account created!' : 'Account created!';
     document.getElementById('success-msg').textContent   = isOrg ? 'Redirecting to login to access your dashboard...' : 'Redirecting to login...';

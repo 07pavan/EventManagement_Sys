@@ -11,18 +11,23 @@ class AccountsAPITests(APITestCase):
 
     def setUp(self):
         # Create a test user
+        from django.contrib.auth.hashers import make_password
         self.user = User.objects.create_user(
             username="testuser",
             email="testuser@example.com",
             password="TestPassword123!",
             first_name="Test",
             last_name="User",
-            bio="Original bio"
+            bio="Original bio",
+            security_question="first_pet",
+            security_answer=make_password("buddy")
         )
         self.profile_url = reverse("auth-profile")
         self.reset_request_url = reverse("password-reset-request")
         self.reset_confirm_url = reverse("password-reset-confirm")
         self.change_password_url = reverse("auth-change-password")
+        self.get_question_url = reverse("auth-security-question")
+        self.reset_question_url = reverse("auth-password-reset-question")
 
     def test_password_reset_flow_success(self):
         """Test full password reset flow with valid token and email."""
@@ -191,4 +196,58 @@ class AccountsAPITests(APITestCase):
             "new_password": "NewSecurePassword456!"
         })
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_security_question_success(self):
+        """Test retrieving the security question of a registered email."""
+        response = self.client.get(f"{self.get_question_url}?email=testuser@example.com")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["question_key"], "first_pet")
+        self.assertEqual(response.data["question_text"], "What was the name of your first pet?")
+
+    def test_get_security_question_decoy(self):
+        """Test that unregistered email returns a decoy question to prevent email enumeration."""
+        response = self.client.get(f"{self.get_question_url}?email=nonexistent@example.com")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["question_key"], "mother_maiden")
+        self.assertEqual(response.data["question_text"], "What is your mother's maiden name?")
+
+    def test_reset_password_question_success(self):
+        """Test password reset successfully with correct security answer."""
+        response = self.client.post(self.reset_question_url, {
+            "email": "testuser@example.com",
+            "security_answer": "buddy",
+            "new_password": "NewSecurePassword456!"
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["detail"], "Password has been reset successfully. You can now sign in.")
+
+        # Verify new password can be used for authentication
+        login_url = reverse("auth-token-obtain")
+        login_response = self.client.post(login_url, {
+            "username": "testuser",
+            "password": "NewSecurePassword456!"
+        })
+        self.assertEqual(login_response.status_code, status.HTTP_200_OK)
+        self.assertIn("access", login_response.data)
+
+    def test_reset_password_question_incorrect_answer(self):
+        """Test password reset fails with incorrect security answer."""
+        response = self.client.post(self.reset_question_url, {
+            "email": "testuser@example.com",
+            "security_answer": "wronganswer",
+            "new_password": "NewSecurePassword456!"
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Incorrect security answer.")
+
+    def test_reset_password_question_nonexistent_email(self):
+        """Test password reset fails with nonexistent email and returns same incorrect answer error."""
+        response = self.client.post(self.reset_question_url, {
+            "email": "nonexistent@example.com",
+            "security_answer": "buddy",
+            "new_password": "NewSecurePassword456!"
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Incorrect security answer.")
+
 

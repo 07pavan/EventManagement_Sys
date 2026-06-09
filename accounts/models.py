@@ -37,6 +37,25 @@ class User(AbstractUser):
 
     bio = models.TextField(blank=True, default="")
 
+    security_question = models.CharField(
+        max_length=50,
+        choices=[
+            ("first_pet", "What was the name of your first pet?"),
+            ("mother_maiden", "What is your mother's maiden name?"),
+            ("first_school", "What was the name of your first school?"),
+            ("birth_city", "In what city were you born?"),
+            ("favorite_movie", "What is your favorite movie?"),
+        ],
+        blank=True,
+        null=True,
+    )
+    security_answer = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Will be stored as a hashed/encrypted value for security.",
+    )
+
     class Meta:
         verbose_name = "User"
         verbose_name_plural = "Users"

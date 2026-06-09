@@ -14,6 +14,8 @@ from .views import (
     PasswordResetRequestView,
     PasswordResetConfirmView,
     PasswordChangeView,
+    GetSecurityQuestionView,
+    ResetPasswordQuestionView,
 )
 
 urlpatterns = [
@@ -29,4 +31,7 @@ urlpatterns = [
     # Password Reset — open endpoints, token-protected
     path("password-reset/",          PasswordResetRequestView.as_view(), name="password-reset-request"),
     path("password-reset/confirm/",  PasswordResetConfirmView.as_view(), name="password-reset-confirm"),
+    # Zero-Email Security Question Reset
+    path("security-question/",       GetSecurityQuestionView.as_view(),  name="auth-security-question"),
+    path("password-reset-question/", ResetPasswordQuestionView.as_view(), name="auth-password-reset-question"),
 ]

@@ -271,6 +271,27 @@ label{display:block;font-size:12px;font-weight:600;color:#4a4455;letter-spacing:
         <textarea id="f-bio" rows="3" placeholder="Tell other attendees about yourself…" style="width:100%;padding:10px 14px;border:1px solid #ccc3d8;border-radius:10px;font-family:Inter,sans-serif;font-size:14px;resize:vertical"></textarea>
       </div>
 
+      <!-- Security question & answer update -->
+      <hr class="border-outline-variant/30 my-md"/>
+      <div class="space-y-sm">
+        <h4 class="font-bold text-sm text-primary tracking-wider uppercase">Recovery Settings</h4>
+        <div>
+          <label>Security Question</label>
+          <select id="f-security-question" style="width:100%;padding:10px 14px;border:1px solid #ccc3d8;border-radius:10px;font-size:14px;background:#fff">
+            <option value="" disabled selected>Select a security question</option>
+            <option value="first_pet">What was the name of your first pet?</option>
+            <option value="mother_maiden">What is your mother's maiden name?</option>
+            <option value="first_school">What was the name of your first school?</option>
+            <option value="birth_city">In what city were you born?</option>
+            <option value="favorite_movie">What is your favorite movie?</option>
+          </select>
+        </div>
+        <div>
+          <label>New Security Answer (Leave blank to keep current)</label>
+          <input type="text" id="f-security-answer" placeholder="Enter new answer"/>
+        </div>
+      </div>
+
       <div class="flex gap-sm pt-sm">
         <button type="button" onclick="closeModal()" class="flex-1 border-2 border-primary text-primary py-3 rounded-full font-bold active:scale-95 transition-all">Cancel</button>
         <button type="submit" id="submit-btn" class="flex-1 bg-primary text-white py-3 rounded-full font-bold shadow-lg shadow-primary/25 active:scale-95 transition-all">Save Changes</button>
@@ -448,6 +469,8 @@ function openModal() {
   document.getElementById('f-first-name').value = currentProfile.first_name || '';
   document.getElementById('f-last-name').value = currentProfile.last_name || '';
   document.getElementById('f-bio').value = currentProfile.bio || '';
+  document.getElementById('f-security-question').value = currentProfile.security_question || '';
+  document.getElementById('f-security-answer').value = '';
   
   // Reset file input
   document.getElementById('f-avatar').value = '';
@@ -515,11 +538,17 @@ async function handleSubmitProfile(e) {
   const lastName = document.getElementById('f-last-name').value.trim();
   const bio = document.getElementById('f-bio').value.trim();
   const avatarFile = document.getElementById('f-avatar').files[0];
+  const secQuestion = document.getElementById('f-security-question').value;
+  const secAnswer = document.getElementById('f-security-answer').value.trim();
   
   const formData = new FormData();
   formData.append('first_name', firstName);
   formData.append('last_name', lastName);
   formData.append('bio', bio);
+  formData.append('security_question', secQuestion);
+  if (secAnswer) {
+    formData.append('security_answer', secAnswer);
+  }
   if (avatarFile) {
     formData.append('avatar', avatarFile);
   }

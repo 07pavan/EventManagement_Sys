@@ -82,12 +82,16 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             "password2",
             "role",  # Whitelisted: only 'regular' or 'organizer' accepted
             # `is_staff`, `is_superuser`, `is_active` are excluded.
+            "security_question",
+            "security_answer",
         ]
         extra_kwargs = {
             "email": {"required": True},
             "first_name": {"required": False},
             "last_name": {"required": False},
             "role": {"required": False},
+            "security_question": {"required": True},
+            "security_answer": {"required": True, "write_only": True},
         }
 
     def validate_role(self, value):
@@ -127,11 +131,26 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return value.strip()
 
     def validate(self, attrs):
-        """Cross-field validation: ensure passwords match."""
+        """Cross-field validation: ensure passwords match and hash security answer."""
         if attrs["password"] != attrs.pop("password2"):
             raise serializers.ValidationError(
                 {"password": "Password fields did not match."}
             )
+
+        # Validate security question & answer
+        if not attrs.get("security_question") or not attrs.get("security_answer"):
+            raise serializers.ValidationError(
+                {"security_question": "Both security question and answer are required."}
+            )
+        
+        answer_clean = attrs["security_answer"].strip().lower()
+        if len(answer_clean) < 2:
+            raise serializers.ValidationError(
+                {"security_answer": "Security answer must be at least 2 characters."}
+            )
+        
+        from django.contrib.auth.hashers import make_password
+        attrs["security_answer"] = make_password(answer_clean)
         return attrs
 
     def create(self, validated_data):
@@ -183,8 +202,26 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "avatar",
             "bio",
             "date_joined",
+            "security_question",
+            "security_answer",
         ]
         read_only_fields = ["id", "username", "role", "email", "date_joined"]
+        extra_kwargs = {
+            "security_answer": {"write_only": True, "required": False},
+        }
+
+    def validate(self, attrs):
+        # Hash security answer if provided in profile update
+        answer = attrs.get("security_answer")
+        if answer is not None:
+            answer_clean = answer.strip().lower()
+            if len(answer_clean) < 2:
+                raise serializers.ValidationError(
+                    {"security_answer": "Security answer must be at least 2 characters."}
+                )
+            from django.contrib.auth.hashers import make_password
+            attrs["security_answer"] = make_password(answer_clean)
+        return attrs
 
 
 # --------------------------------------------------------------------------- #

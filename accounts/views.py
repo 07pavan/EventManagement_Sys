@@ -384,3 +384,101 @@ class PasswordChangeView(generics.GenericAPIView):
             status=status.HTTP_200_OK,
         )
 
+
+class GetSecurityQuestionView(generics.GenericAPIView):
+    """
+    GET /api/auth/security-question/?email=...
+
+    Fetches the security question for a given email address.
+    To prevent email probing (username enumeration), if the email is not registered
+    or has no security question set, we return a decoy question.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        email = request.query_params.get("email", "").strip().lower()
+        if not email:
+            return Response(
+                {"detail": "Email parameter is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        decoy_question = {
+            "question_key": "mother_maiden",
+            "question_text": "What is your mother's maiden name?",
+        }
+
+        try:
+            user = User.objects.get(email=email)
+            if user.security_question:
+                choices = User._meta.get_field("security_question").choices
+                question_label = dict(choices).get(user.security_question)
+                return Response(
+                    {
+                        "question_key": user.security_question,
+                        "question_text": question_label,
+                    },
+                    status=status.HTTP_200_OK,
+                )
+        except User.DoesNotExist:
+            pass
+
+        # Return decoy question to prevent email enumeration
+        return Response(decoy_question, status=status.HTTP_200_OK)
+
+
+class ResetPasswordQuestionView(generics.GenericAPIView):
+    """
+    POST /api/auth/password-reset-question/
+
+    Resets the password by validating the user's security answer.
+    Accepts: { "email": "...", "security_answer": "...", "new_password": "..." }
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email", "").strip().lower()
+        security_answer = request.data.get("security_answer", "").strip().lower()
+        new_password = request.data.get("new_password", "").strip()
+
+        if not email or not security_answer or not new_password:
+            return Response(
+                {"detail": "email, security_answer, and new_password are all required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        generic_error = {"detail": "Incorrect security answer."}
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            # Prevent revealing email presence
+            return Response(generic_error, status=status.HTTP_400_BAD_REQUEST)
+
+        if not user.security_answer:
+            return Response(generic_error, status=status.HTTP_400_BAD_REQUEST)
+
+        # Verify the security answer using check_password (since it is hashed)
+        from django.contrib.auth.hashers import check_password
+        if not check_password(security_answer, user.security_answer):
+            return Response(generic_error, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate the new password
+        try:
+            validate_password(new_password, user=user)
+        except DjangoValidationError as exc:
+            return Response(
+                {"detail": " ".join(exc.messages)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Reset password
+        user.set_password(new_password)
+        user.save(update_fields=["password"])
+
+        return Response(
+            {"detail": "Password has been reset successfully. You can now sign in."},
+            status=status.HTTP_200_OK,
+        )
+
+
