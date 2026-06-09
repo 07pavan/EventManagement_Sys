@@ -443,11 +443,7 @@ LOGGING = {
 if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 else:
-    EMAIL_BACKEND   = "django.core.mail.backends.smtp.EmailBackend"
-    EMAIL_HOST      = os.environ.get("EMAIL_HOST", "smtp.resend.com")
-    EMAIL_PORT      = int(os.environ.get("EMAIL_PORT", "587"))
-    EMAIL_USE_TLS   = True
-    EMAIL_HOST_USER     = os.environ.get("EMAIL_HOST_USER", "resend")
+    EMAIL_BACKEND       = "core.email_backends.ResendAPIBackend"
     EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
 DEFAULT_FROM_EMAIL = os.environ.get(
